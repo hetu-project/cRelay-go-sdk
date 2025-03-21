@@ -3,12 +3,12 @@
 package nostr
 
 import (
-	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+    "strings"
 
-	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/btcec/v2/schnorr"
+	"github.com/ethereum/go-ethereum/crypto"
+	//"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
 // CheckSignature checks if the event signature is valid for the given event.
@@ -16,36 +16,38 @@ import (
 // If the signature is invalid bool will be false and err will be set.
 func (evt Event) CheckSignature() (bool, error) {
 	// read and check pubkey
-	pk, err := hex.DecodeString(evt.PubKey)
-	if err != nil {
-		return false, fmt.Errorf("event pubkey '%s' is invalid hex: %w", evt.PubKey, err)
-	}
-
-	pubkey, err := schnorr.ParsePubKey(pk)
-	if err != nil {
-		return false, fmt.Errorf("event has invalid pubkey '%s': %w", evt.PubKey, err)
-	}
+    address := "0x" + evt.PubKey
 
 	// read signature
-	s, err := hex.DecodeString(evt.Sig)
+    //sig, err := hexutil.Decode(evt.Sig)
+    sig, err := hex.DecodeString(evt.Sig)
 	if err != nil {
 		return false, fmt.Errorf("signature '%s' is invalid hex: %w", evt.Sig, err)
 	}
-	sig, err := schnorr.ParseSignature(s)
-	if err != nil {
-		return false, fmt.Errorf("failed to parse signature: %w", err)
+	if sig[64] >= 27 {
+		sig[64] -= 27
 	}
 
 	// check signature
-	hash := sha256.Sum256(evt.Serialize())
-	return sig.Verify(hash[:], pubkey), nil
+    message := evt.Serialize()
+    prefixedMessage := fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(message), message)
+	hash := crypto.Keccak256Hash([]byte(prefixedMessage))
+
+    pubKey, err := crypto.SigToPub(hash.Bytes(), sig)
+	if err != nil {
+        return false, fmt.Errorf("failed to recover public key: %w", err)
+	}
+
+	recoveredAddr := crypto.PubkeyToAddress(*pubKey).Hex()
+
+	return (recoveredAddr == address), nil
 }
 
 // Sign signs an event with a given privateKey.
 // It sets the event's ID, PubKey, and Sig fields.
 // Returns an error if the private key is invalid or if signing fails.
 func (evt *Event) Sign(secretKey string) error {
-	s, err := hex.DecodeString(secretKey)
+    s, err := crypto.HexToECDSA(secretKey)
 	if err != nil {
 		return fmt.Errorf("Sign called with invalid secret key '%s': %w", secretKey, err)
 	}
@@ -54,18 +56,22 @@ func (evt *Event) Sign(secretKey string) error {
 		evt.Tags = make(Tags, 0)
 	}
 
-	sk, pk := btcec.PrivKeyFromBytes(s)
-	pkBytes := pk.SerializeCompressed()
-	evt.PubKey = hex.EncodeToString(pkBytes[1:])
+	evt.PubKey = crypto.PubkeyToAddress(s.PublicKey).Hex()
+    evt.PubKey = strings.TrimPrefix(crypto.PubkeyToAddress(s.PublicKey).Hex(), "0x")
 
-	h := sha256.Sum256(evt.Serialize())
-	sig, err := schnorr.Sign(sk, h[:], schnorr.FastSign())
+
+    message := evt.Serialize()
+	prefixedMessage := fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(message), message)
+	h:= crypto.Keccak256Hash([]byte(prefixedMessage))
+
+    sig, err := crypto.Sign(h.Bytes(), s)
 	if err != nil {
-		return err
+        return fmt.Errorf("failed to sign: %w", err)
 	}
 
-	evt.ID = hex.EncodeToString(h[:])
-	evt.Sig = hex.EncodeToString(sig.Serialize())
+	evt.ID = hex.EncodeToString(h.Bytes())
+    //evt.Sig = hexutil.Encode(sig)
+	evt.Sig = hex.EncodeToString(sig)
 
 	return nil
 }
