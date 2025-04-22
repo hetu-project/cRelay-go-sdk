@@ -107,13 +107,13 @@ func BenchmarkIDCheck(b *testing.B) {
 	evt.Sign(GeneratePrivateKey())
 
 	b.Run("naïve", func(b *testing.B) {
-		for b.Loop() {
+		for i := 0; i < b.N; i++ {
 			_ = evt.GetID() == evt.ID
 		}
 	})
 
 	b.Run("big brain", func(b *testing.B) {
-		for b.Loop() {
+		for i := 0; i < b.N; i++ {
 			_ = evt.CheckID()
 		}
 	})
