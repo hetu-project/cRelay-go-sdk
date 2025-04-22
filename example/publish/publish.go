@@ -8,6 +8,7 @@ import (
 )
 
 func main() {
+	relays := []string{"ws://161.97.129.166:10547"}
 	sk := nostr.GeneratePrivateKey()
 	pub, _ := nostr.GetPublicKey(sk)
 	ev := nostr.Event{
@@ -23,7 +24,7 @@ func main() {
 
 	// publish the event to self relays
 	ctx := context.Background()
-	for _, url := range []string{"ws://161.97.129.166:10547"} {
+	for _, url := range relays {
 		relay, err := nostr.RelayConnect(ctx, url)
 		if err != nil {
 			fmt.Println(err)
