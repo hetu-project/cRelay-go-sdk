@@ -8,7 +8,6 @@ import (
 	"math/big"
 
 	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 )
 
 func GeneratePrivateKey() string {
@@ -35,7 +34,7 @@ func GetPublicKey(sk string) (string, error) {
 	}
 
 	_, pk := btcec.PrivKeyFromBytes(b)
-	return hex.EncodeToString(schnorr.SerializePubKey(pk)), nil
+	return hex.EncodeToString(pk.SerializeUncompressed()), nil
 }
 
 func IsValidPublicKey(pk string) bool {
@@ -44,6 +43,7 @@ func IsValidPublicKey(pk string) bool {
 	}
 
 	v, _ := hex.DecodeString(pk)
-	_, err := schnorr.ParsePubKey(v)
+    _, err := btcec.ParsePubKey(v)
+
 	return err == nil
 }
