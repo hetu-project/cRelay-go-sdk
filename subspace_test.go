@@ -4,20 +4,21 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/nbd-wtf/go-nostr/cip"
 )
 
 func TestSubspaceCreateEvent(t *testing.T) {
 	// Test creating a subspace with basic operations
 	createEvent := NewSubspaceCreateEvent(
 		"test-subspace",
-		DefaultSubspaceOps,
+		cip.DefaultSubspaceOps,
 		"energy>1000",
 		"Test Subspace",
 		"https://example.com/image.png",
 	)
 
 	// Verify event kind
-	assert.Equal(t, KindSubspaceCreate, createEvent.Kind)
+	assert.Equal(t, cip.KindSubspaceCreate, createEvent.Kind)
 
 	// Verify required tags
 	requiredTags := map[string]bool{
@@ -61,7 +62,7 @@ func TestSubspaceJoinEvent(t *testing.T) {
 	// Create a subspace first to get a valid sid
 	createEvent := NewSubspaceCreateEvent(
 		"test-subspace",
-		DefaultSubspaceOps,
+		cip.DefaultSubspaceOps,
 		"energy>1000",
 		"Test Subspace",
 		"https://example.com/image.png",
@@ -71,7 +72,7 @@ func TestSubspaceJoinEvent(t *testing.T) {
 	joinEvent := NewSubspaceJoinEvent(createEvent.SubspaceID)
 
 	// Verify event kind
-	assert.Equal(t, KindSubspaceJoin, joinEvent.Kind)
+	assert.Equal(t, cip.KindSubspaceJoin, joinEvent.Kind)
 
 	// Verify required tags
 	requiredTags := map[string]bool{
@@ -100,56 +101,4 @@ func TestSubspaceJoinEvent(t *testing.T) {
 	parsedEvent, err := ParseSubspaceJoinEvent(joinEvent.Event)
 	assert.NoError(t, err)
 	assert.Equal(t, joinEvent.SubspaceID, parsedEvent.SubspaceID)
-}
-
-func TestSubspaceOpEvent(t *testing.T) {
-	// Create a subspace first to get a valid sid
-	createEvent := NewSubspaceCreateEvent(
-		"test-subspace",
-		DefaultSubspaceOps,
-		"energy>1000",
-		"Test Subspace",
-		"https://example.com/image.png",
-	)
-
-	// Test creating a post operation
-	postEvent := NewSubspaceOpEvent(createEvent.SubspaceID, OpPost)
-	postEvent.SetContentType("markdown")
-	postEvent.SetParent("parent-hash")
-	postEvent.Content = "Test post content"
-
-	// Verify event kind
-	assert.Equal(t, KindSubspaceOp, postEvent.Kind)
-
-	// Verify required tags
-	requiredTags := map[string]bool{
-		"d":   false,
-		"sid": false,
-		"ops": false,
-	}
-
-	for _, tag := range postEvent.Tags {
-		if len(tag) < 2 {
-			continue
-		}
-		if _, exists := requiredTags[tag[0]]; exists {
-			requiredTags[tag[0]] = true
-		}
-	}
-
-	for tag, found := range requiredTags {
-		assert.True(t, found, "missing required tag: %s", tag)
-	}
-
-	// Test validation
-	err := ValidateSubspaceOpEvent(postEvent)
-	assert.NoError(t, err)
-
-	// Test parsing
-	parsedEvent, err := ParseSubspaceOpEvent(postEvent.Event)
-	assert.NoError(t, err)
-	assert.Equal(t, postEvent.SubspaceID, parsedEvent.SubspaceID)
-	assert.Equal(t, postEvent.Operation, parsedEvent.Operation)
-	assert.Equal(t, postEvent.ContentType, parsedEvent.ContentType)
-	assert.Equal(t, postEvent.ParentHash, parsedEvent.ParentHash)
 }

@@ -5,42 +5,14 @@ import (
 	"fmt"
 
 	"github.com/nbd-wtf/go-nostr"
+	"github.com/nbd-wtf/go-nostr/cip"
+	"github.com/nbd-wtf/go-nostr/cip/cip01"
+	"github.com/nbd-wtf/go-nostr/cip/cip02"
 )
-
-// Business operation types
-const (
-	OpModel   = "model"   // 5
-	OpData    = "data"    // 6
-	OpCompute = "compute" // 7
-	OpAlgo    = "algo"    // 8
-	OpValid   = "valid"   // 9
-)
-
-// BusinessOps returns the business operations string
-func BusinessOps() string {
-	return "model=5,data=6,compute=7,algo=8,valid=9"
-}
 
 // AllOps returns the combined operations string including both basic and business operations
 func AllOps() string {
-	return nostr.DefaultSubspaceOps + "," + BusinessOps()
-}
-
-// ValidateBusinessOp validates a business operation event
-func ValidateBusinessOp(evt *nostr.SubspaceOpEvent) error {
-	// Verify operation type
-	validOps := map[string]bool{
-		OpModel:   true,
-		OpData:    true,
-		OpCompute: true,
-		OpAlgo:    true,
-		OpValid:   true,
-	}
-	if !validOps[evt.Operation] {
-		return fmt.Errorf("invalid business operation type: %s", evt.Operation)
-	}
-
-	return nil
+	return cip.DefaultSubspaceOps + "," + cip.ModelGraphSubspaceOps
 }
 
 func main() {
@@ -65,7 +37,10 @@ func main() {
 	joinEvent.Sign(sk)
 
 	// Create a post operation (basic operation)
-	postEvent := nostr.NewSubspaceOpEvent(createEvent.SubspaceID, nostr.OpPost)
+	postEvent, err := cip01.NewPostEvent(createEvent.SubspaceID)
+	if err != nil {
+		fmt.Printf("err: %s", err)
+	}
 	postEvent.PubKey = pub
 	postEvent.SetContentType("markdown")
 	postEvent.SetParent("parent-hash")
@@ -73,39 +48,33 @@ func main() {
 	postEvent.Sign(sk)
 
 	// Create a proposal (basic operation)
-	proposeEvent := nostr.NewSubspaceOpEvent(createEvent.SubspaceID, nostr.OpPropose)
+	proposeEvent, err := cip01.NewProposeEvent(createEvent.SubspaceID)
 	proposeEvent.PubKey = pub
 	proposeEvent.SetProposal("prop_001", "energy>2000")
 	proposeEvent.Content = "Increase the energy requirement for subspace addition to 2000"
 	proposeEvent.Sign(sk)
 
 	// Create a vote (basic operation)
-	voteEvent := nostr.NewSubspaceOpEvent(createEvent.SubspaceID, nostr.OpVote)
+	voteEvent, err := cip01.NewVoteEvent(createEvent.SubspaceID)
 	voteEvent.PubKey = pub
 	voteEvent.SetVote("prop_001", "yes")
 	voteEvent.Content = "Agree to increase the energy requirements"
 	voteEvent.Sign(sk)
 
 	// Create an invite (basic operation)
-	inviteEvent := nostr.NewSubspaceOpEvent(createEvent.SubspaceID, nostr.OpInvite)
+	inviteEvent, err := cip01.NewInviteEvent(createEvent.SubspaceID)
 	inviteEvent.PubKey = pub
 	inviteEvent.SetInvite("<Charlie's ETH Address>", "energy>1000")
 	inviteEvent.Content = "Invite Charlie join into Desci AI subspace"
 	inviteEvent.Sign(sk)
 
 	// Create a model operation (business operation)
-	modelEvent := nostr.NewSubspaceOpEvent(createEvent.SubspaceID, OpModel)
+	modelEvent, err := cip02.NewModelEvent(createEvent.SubspaceID)
 	modelEvent.PubKey = pub
 	modelEvent.SetParent("parent-hash")
 	modelEvent.SetContributions("base:0.1,data:0.6,algo:0.3")
 	modelEvent.Content = "ipfs://bafy..."
 	modelEvent.Sign(sk)
-
-	// Validate business operation
-	if err := ValidateBusinessOp(modelEvent); err != nil {
-		fmt.Printf("Invalid business operation: %v\n", err)
-		return
-	}
 
 	// publish the events to relays
 	ctx := context.Background()

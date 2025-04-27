@@ -1,31 +1,14 @@
 package nostr
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	jsonutils "encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
-)
 
-// Subspace event kinds
-const (
-	KindSubspaceCreate = 30100
-	KindSubspaceJoin   = 30200
-	KindSubspaceOp     = 30300
+	"github.com/nbd-wtf/go-nostr/cip"
 )
-
-// Basic operation types (core operations)
-const (
-	OpPost    = "post"    // 1
-	OpPropose = "propose" // 2
-	OpVote    = "vote"    // 3
-	OpInvite  = "invite"  // 4
-)
-
-// Default operations string for subspace creation
-const DefaultSubspaceOps = "post=1,propose=2,vote=3,invite=4"
 
 // SubspaceCreateEvent represents a subspace creation event
 type SubspaceCreateEvent struct {
@@ -40,12 +23,7 @@ type SubspaceCreateEvent struct {
 
 // calculateSubspaceID generates a unique subspace ID based on subspace_name, ops, and rules
 func calculateSubspaceID(subspaceName, ops, rules string) string {
-	// Concatenate the components
-	input := subspaceName + ops + rules
-	// Calculate SHA256 hash
-	hash := sha256.Sum256([]byte(input))
-	// Convert to hex string with "0x" prefix
-	return "0x" + hex.EncodeToString(hash[:])
+	return cip.CalculateSubspaceID(subspaceName, ops, rules)
 }
 
 // NewSubspaceCreateEvent creates a new subspace creation event
@@ -55,7 +33,7 @@ func NewSubspaceCreateEvent(subspaceName, ops, rules, description, imageURL stri
 
 	evt := &SubspaceCreateEvent{
 		Event: Event{
-			Kind:      KindSubspaceCreate,
+			Kind:      cip.KindSubspaceCreate,
 			CreatedAt: Timestamp(time.Now().Unix()),
 		},
 		SubspaceID:   sid,
@@ -68,7 +46,7 @@ func NewSubspaceCreateEvent(subspaceName, ops, rules, description, imageURL stri
 
 	// Set tags
 	evt.Tags = Tags{
-		Tag{"d", "subspace_create"},
+		Tag{"d", cip.OpSubspaceCreate},
 		Tag{"sid", sid},
 		Tag{"subspace_name", subspaceName},
 		Tag{"ops", ops},
@@ -91,8 +69,8 @@ func NewSubspaceCreateEvent(subspaceName, ops, rules, description, imageURL stri
 // ValidateSubspaceCreateEvent validates a SubspaceCreateEvent
 func ValidateSubspaceCreateEvent(evt *SubspaceCreateEvent) error {
 	// 1. Verify event kind
-	if evt.Kind != KindSubspaceCreate {
-		return fmt.Errorf("invalid event kind: expected %d, got %d", KindSubspaceCreate, evt.Kind)
+	if evt.Kind != cip.KindSubspaceCreate {
+		return fmt.Errorf("invalid event kind: expected %d, got %d", cip.KindSubspaceCreate, evt.Kind)
 	}
 
 	// 2. Verify required tags
@@ -202,14 +180,14 @@ type SubspaceJoinEvent struct {
 func NewSubspaceJoinEvent(subspaceID string) *SubspaceJoinEvent {
 	evt := &SubspaceJoinEvent{
 		Event: Event{
-			Kind:      KindSubspaceJoin,
+			Kind:      cip.KindSubspaceJoin,
 			CreatedAt: Timestamp(time.Now().Unix()),
 		},
 		SubspaceID: subspaceID,
 	}
 
 	evt.Tags = Tags{
-		Tag{"d", "subspace_join"},
+		Tag{"d", cip.OpSubspaceJoin},
 		Tag{"sid", subspaceID},
 	}
 
@@ -219,8 +197,8 @@ func NewSubspaceJoinEvent(subspaceID string) *SubspaceJoinEvent {
 // ValidateSubspaceJoinEvent validates a SubspaceJoinEvent
 func ValidateSubspaceJoinEvent(evt *SubspaceJoinEvent) error {
 	// 1. Verify event kind
-	if evt.Kind != KindSubspaceJoin {
-		return fmt.Errorf("invalid event kind: expected %d, got %d", KindSubspaceJoin, evt.Kind)
+	if evt.Kind != cip.KindSubspaceJoin {
+		return fmt.Errorf("invalid event kind: expected %d, got %d", cip.KindSubspaceJoin, evt.Kind)
 	}
 
 	// 2. Verify required tags
@@ -246,11 +224,8 @@ func ValidateSubspaceJoinEvent(evt *SubspaceJoinEvent) error {
 	}
 
 	// 3. Verify sid format (should be a valid hex string with 0x prefix)
-	if !strings.HasPrefix(evt.SubspaceID, "0x") {
-		return fmt.Errorf("invalid subspace ID format: should start with 0x")
-	}
-	if len(evt.SubspaceID) != 66 { // 0x + 64 hex chars
-		return fmt.Errorf("invalid subspace ID length: expected 66, got %d", len(evt.SubspaceID))
+	if err := cip.ValidateSubspaceID(evt.SubspaceID); err != nil {
+		return err
 	}
 
 	return nil
@@ -280,24 +255,34 @@ func ParseSubspaceJoinEvent(evt Event) (*SubspaceJoinEvent, error) {
 	return joinEvt, nil
 }
 
+// SubspaceOpEventPtr represents a governance subspace event
+type SubspaceOpEventPtr interface {
+	GetSubspaceID() string
+	GetOperation() string
+	GetAuthTag() cip.AuthTag
+}
+
 // SubspaceOpEvent represents a subspace operation event
 type SubspaceOpEvent struct {
 	Event
-	SubspaceID    string
-	Operation     string
-	ContentType   string
-	ParentHash    string
-	ProposalID    string
-	Vote          string
-	InviteePubkey string
-	Contributions string
+	SubspaceID string
+	Operation  string
+	AuthTag    cip.AuthTag
 }
 
+func (e *SubspaceOpEvent) GetSubspaceID() string   { return e.SubspaceID }
+func (e *SubspaceOpEvent) GetOperation() string    { return e.Operation }
+func (e *SubspaceOpEvent) GetAuthTag() cip.AuthTag { return e.AuthTag }
+
 // NewSubspaceOpEvent creates a new subspace operation event
-func NewSubspaceOpEvent(subspaceID, operation string) *SubspaceOpEvent {
+func NewSubspaceOpEvent(subspaceID string, kind int) (*SubspaceOpEvent, error) {
+	operation, exist := cip.GetOpFromKind(kind)
+	if !exist {
+		return nil, errors.New("Not existed operation!")
+	}
 	evt := &SubspaceOpEvent{
 		Event: Event{
-			Kind:      KindSubspaceOp,
+			Kind:      kind,
 			CreatedAt: Timestamp(time.Now().Unix()),
 		},
 		SubspaceID: subspaceID,
@@ -307,154 +292,14 @@ func NewSubspaceOpEvent(subspaceID, operation string) *SubspaceOpEvent {
 	evt.Tags = Tags{
 		Tag{"d", "subspace_op"},
 		Tag{"sid", subspaceID},
-		Tag{"ops", operation},
+		Tag{"op", operation},
 	}
 
-	return evt
+	return evt, nil
 }
 
-// SetContentType sets the content type for the operation
-func (e *SubspaceOpEvent) SetContentType(contentType string) {
-	e.ContentType = contentType
-	e.Tags = append(e.Tags, Tag{"content_type", contentType})
-}
-
-// SetParent sets the parent event hash
-func (e *SubspaceOpEvent) SetParent(parentHash string) {
-	e.ParentHash = parentHash
-	e.Tags = append(e.Tags, Tag{"parent", parentHash})
-}
-
-// SetProposal sets the proposal ID and rules
-func (e *SubspaceOpEvent) SetProposal(proposalID, rules string) {
-	e.ProposalID = proposalID
-	e.Tags = append(e.Tags, Tag{"proposal_id", proposalID})
-	if rules != "" {
-		e.Tags = append(e.Tags, Tag{"rules", rules})
-	}
-}
-
-// SetVote sets the vote for a proposal
-func (e *SubspaceOpEvent) SetVote(proposalID, vote string) {
-	e.ProposalID = proposalID
-	e.Vote = vote
-	e.Tags = append(e.Tags, Tag{"proposal_id", proposalID}, Tag{"vote", vote})
-}
-
-// SetInvite sets the invitee pubkey and rules
-func (e *SubspaceOpEvent) SetInvite(inviteePubkey, rules string) {
-	e.InviteePubkey = inviteePubkey
-	e.Tags = append(e.Tags, Tag{"invitee_pubkey", inviteePubkey})
-	if rules != "" {
-		e.Tags = append(e.Tags, Tag{"rules", rules})
-	}
-}
-
-// SetContributions sets the contribution weights
-func (e *SubspaceOpEvent) SetContributions(contributions string) {
-	e.Contributions = contributions
-	e.Tags = append(e.Tags, Tag{"contrib", contributions})
-}
-
-// ValidateSubspaceOpEvent validates a SubspaceOpEvent
-func ValidateSubspaceOpEvent(evt *SubspaceOpEvent) error {
-	// 1. Verify event kind
-	if evt.Kind != KindSubspaceOp {
-		return fmt.Errorf("invalid event kind: expected %d, got %d", KindSubspaceOp, evt.Kind)
-	}
-
-	// 2. Verify required tags
-	requiredTags := map[string]bool{
-		"d":   false,
-		"sid": false,
-		"ops": false,
-	}
-
-	for _, tag := range evt.Tags {
-		if len(tag) < 2 {
-			continue
-		}
-		if _, exists := requiredTags[tag[0]]; exists {
-			requiredTags[tag[0]] = true
-		}
-	}
-
-	// Check if all required tags are present
-	for tag, found := range requiredTags {
-		if !found {
-			return fmt.Errorf("missing required tag: %s", tag)
-		}
-	}
-
-	// 3. Verify sid format
-	if !strings.HasPrefix(evt.SubspaceID, "0x") {
-		return fmt.Errorf("invalid subspace ID format: should start with 0x")
-	}
-	if len(evt.SubspaceID) != 66 {
-		return fmt.Errorf("invalid subspace ID length: expected 66, got %d", len(evt.SubspaceID))
-	}
-
-	// 4. Operation-specific validations
-	switch evt.Operation {
-	case OpPost:
-		if evt.ContentType == "" {
-			return fmt.Errorf("content_type is required for post operation")
-		}
-	case OpPropose:
-		if evt.ProposalID == "" {
-			return fmt.Errorf("proposal_id is required for propose operation")
-		}
-	case OpVote:
-		if evt.ProposalID == "" || evt.Vote == "" {
-			return fmt.Errorf("proposal_id and vote are required for vote operation")
-		}
-		if evt.Vote != "yes" && evt.Vote != "no" {
-			return fmt.Errorf("invalid vote value: %s", evt.Vote)
-		}
-	case OpInvite:
-		if evt.InviteePubkey == "" {
-			return fmt.Errorf("invitee_pubkey is required for invite operation")
-		}
-	}
-
-	return nil
-}
-
-// ParseSubspaceOpEvent parses a raw Event into a SubspaceOpEvent
-func ParseSubspaceOpEvent(evt Event) (*SubspaceOpEvent, error) {
-	opEvt := &SubspaceOpEvent{
-		Event: evt,
-	}
-
-	// Extract fields from tags
-	for _, tag := range evt.Tags {
-		if len(tag) < 2 {
-			continue
-		}
-		switch tag[0] {
-		case "sid":
-			opEvt.SubspaceID = tag[1]
-		case "ops":
-			opEvt.Operation = tag[1]
-		case "content_type":
-			opEvt.ContentType = tag[1]
-		case "parent":
-			opEvt.ParentHash = tag[1]
-		case "proposal_id":
-			opEvt.ProposalID = tag[1]
-		case "vote":
-			opEvt.Vote = tag[1]
-		case "invitee_pubkey":
-			opEvt.InviteePubkey = tag[1]
-		case "contrib":
-			opEvt.Contributions = tag[1]
-		}
-	}
-
-	// Validate the parsed event
-	if err := ValidateSubspaceOpEvent(opEvt); err != nil {
-		return nil, fmt.Errorf("invalid subspace operation event: %v", err)
-	}
-
-	return opEvt, nil
+// SetAuth sets the auth tag for the operation
+func (e *SubspaceOpEvent) SetAuth(action cip.Action, key uint32, exp uint64) {
+	e.AuthTag = cip.NewAuthTag(action, key, exp)
+	e.Tags = append(e.Tags, Tag{"auth", e.AuthTag.String()})
 }
