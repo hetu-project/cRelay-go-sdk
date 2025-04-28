@@ -24,7 +24,7 @@ func main() {
 	createEvent := nostr.NewSubspaceCreateEvent(
 		"modelgraph",
 		AllOps(), // Use combined operations string
-		"energy>1000",
+		"energy>10000",
 		"Desci AI Model collaboration subspace",
 		"https://causality-graph.com/images/subspace.png",
 	)
@@ -57,7 +57,7 @@ func main() {
 	// Create a vote (basic operation)
 	voteEvent, err := cip01.NewVoteEvent(createEvent.SubspaceID)
 	voteEvent.PubKey = pub
-	voteEvent.SetVote("prop_001", "yes")
+	voteEvent.SetVote("prop_002", "yes")
 	voteEvent.Content = "Agree to increase the energy requirements"
 	voteEvent.Sign(sk)
 
@@ -72,7 +72,7 @@ func main() {
 	modelEvent, err := cip02.NewModelEvent(createEvent.SubspaceID)
 	modelEvent.PubKey = pub
 	modelEvent.SetParent("parent-hash")
-	modelEvent.SetContributions("base:0.1,data:0.6,algo:0.3")
+	modelEvent.SetContributions("base:0.1,data:0.6,algo:0.4")
 	modelEvent.Content = "ipfs://bafy..."
 	modelEvent.Sign(sk)
 
