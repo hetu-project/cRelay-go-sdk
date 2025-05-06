@@ -60,6 +60,7 @@ func ParseModelGraphEvent(evt nostr.Event) (nostr.SubspaceOpEventPtr, error) {
 	// Extract common fields
 	subspaceID := ""
 	var authTag cip.AuthTag
+	parents := []string{}
 
 	for _, tag := range evt.Tags {
 		if len(tag) < 2 {
@@ -86,26 +87,27 @@ func ParseModelGraphEvent(evt nostr.Event) (nostr.SubspaceOpEventPtr, error) {
 	// Parse based on operation type
 	switch operation {
 	case cip.OpModel:
-		return parseModelEvent(evt, subspaceID, operation, authTag)
+		return parseModelEvent(evt, subspaceID, operation, authTag, parents)
 	case cip.OpData:
-		return parseDataEvent(evt, subspaceID, operation, authTag)
+		return parseDataEvent(evt, subspaceID, operation, authTag, parents)
 	case cip.OpCompute:
-		return parseComputeEvent(evt, subspaceID, operation, authTag)
+		return parseComputeEvent(evt, subspaceID, operation, authTag, parents)
 	case cip.OpAlgo:
-		return parseAlgoEvent(evt, subspaceID, operation, authTag)
+		return parseAlgoEvent(evt, subspaceID, operation, authTag, parents)
 	case cip.OpValid:
-		return parseValidEvent(evt, subspaceID, operation, authTag)
+		return parseValidEvent(evt, subspaceID, operation, authTag, parents)
 	default:
 		return nil, fmt.Errorf("unknown operation type: %s", operation)
 	}
 }
 
-func parseModelEvent(evt nostr.Event, subspaceID, operation string, authTag cip.AuthTag) (*ModelEvent, error) {
+func parseModelEvent(evt nostr.Event, subspaceID, operation string, authTag cip.AuthTag, parents []string) (*ModelEvent, error) {
 	model := &ModelEvent{
 		SubspaceOpEvent: &nostr.SubspaceOpEvent{
 			SubspaceID: subspaceID,
 			Operation:  operation,
 			AuthTag:    authTag,
+			Parents:    parents,
 		},
 		Content: evt.Content,
 	}
@@ -125,12 +127,13 @@ func parseModelEvent(evt nostr.Event, subspaceID, operation string, authTag cip.
 	return model, nil
 }
 
-func parseDataEvent(evt nostr.Event, subspaceID, operation string, authTag cip.AuthTag) (*DataEvent, error) {
+func parseDataEvent(evt nostr.Event, subspaceID, operation string, authTag cip.AuthTag, parents []string) (*DataEvent, error) {
 	data := &DataEvent{
 		SubspaceOpEvent: &nostr.SubspaceOpEvent{
 			SubspaceID: subspaceID,
 			Operation:  operation,
 			AuthTag:    authTag,
+			Parents:    parents,
 		},
 		Content: evt.Content,
 	}
@@ -147,12 +150,13 @@ func parseDataEvent(evt nostr.Event, subspaceID, operation string, authTag cip.A
 	return data, nil
 }
 
-func parseComputeEvent(evt nostr.Event, subspaceID, operation string, authTag cip.AuthTag) (*ComputeEvent, error) {
+func parseComputeEvent(evt nostr.Event, subspaceID, operation string, authTag cip.AuthTag, parents []string) (*ComputeEvent, error) {
 	compute := &ComputeEvent{
 		SubspaceOpEvent: &nostr.SubspaceOpEvent{
 			SubspaceID: subspaceID,
 			Operation:  operation,
 			AuthTag:    authTag,
+			Parents:    parents,
 		},
 		Content: evt.Content,
 	}
@@ -169,12 +173,13 @@ func parseComputeEvent(evt nostr.Event, subspaceID, operation string, authTag ci
 	return compute, nil
 }
 
-func parseAlgoEvent(evt nostr.Event, subspaceID, operation string, authTag cip.AuthTag) (*AlgoEvent, error) {
+func parseAlgoEvent(evt nostr.Event, subspaceID, operation string, authTag cip.AuthTag, parents []string) (*AlgoEvent, error) {
 	algo := &AlgoEvent{
 		SubspaceOpEvent: &nostr.SubspaceOpEvent{
 			SubspaceID: subspaceID,
 			Operation:  operation,
 			AuthTag:    authTag,
+			Parents:    parents,
 		},
 		Content: evt.Content,
 	}
@@ -191,12 +196,13 @@ func parseAlgoEvent(evt nostr.Event, subspaceID, operation string, authTag cip.A
 	return algo, nil
 }
 
-func parseValidEvent(evt nostr.Event, subspaceID, operation string, authTag cip.AuthTag) (*ValidEvent, error) {
+func parseValidEvent(evt nostr.Event, subspaceID, operation string, authTag cip.AuthTag, parents []string) (*ValidEvent, error) {
 	valid := &ValidEvent{
 		SubspaceOpEvent: &nostr.SubspaceOpEvent{
 			SubspaceID: subspaceID,
 			Operation:  operation,
 			AuthTag:    authTag,
+			Parents:    parents,
 		},
 		Content: evt.Content,
 	}

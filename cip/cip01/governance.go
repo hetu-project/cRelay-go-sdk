@@ -11,19 +11,12 @@ import (
 type PostEvent struct {
 	*nostr.SubspaceOpEvent
 	ContentType string
-	ParentHash  string
 }
 
 // SetContentType sets the content type for the operation
 func (e *PostEvent) SetContentType(contentType string) {
 	e.ContentType = contentType
 	e.Tags = append(e.Tags, nostr.Tag{"content_type", contentType})
-}
-
-// SetParent sets the parent event hash
-func (e *PostEvent) SetParent(parentHash string) {
-	e.ParentHash = parentHash
-	e.Tags = append(e.Tags, nostr.Tag{"parent", parentHash})
 }
 
 // ProposeEvent represents a propose operation in governance subspace
@@ -60,14 +53,14 @@ func (e *VoteEvent) SetVote(proposalID, vote string) {
 // InviteEvent represents an invite operation in governance subspace
 type InviteEvent struct {
 	*nostr.SubspaceOpEvent
-	InviteePubkey string
-	Rules         string
+	InviterAddr string
+	Rules       string
 }
 
-// SetInvite sets the invitee pubkey and rules
-func (e *InviteEvent) SetInvite(inviteePubkey, rules string) {
-	e.InviteePubkey = inviteePubkey
-	e.Tags = append(e.Tags, nostr.Tag{"invitee_pubkey", inviteePubkey})
+// SetInviter sets the inviter eth address and rules
+func (e *InviteEvent) SetInviter(inviterAddress, rules string) {
+	e.InviterAddr = inviterAddress
+	e.Tags = append(e.Tags, nostr.Tag{"inviter_addr", inviterAddress})
 	if rules != "" {
 		e.Tags = append(e.Tags, nostr.Tag{"rules", rules})
 	}
@@ -77,6 +70,7 @@ func (e *InviteEvent) SetInvite(inviteePubkey, rules string) {
 func ParseGovernanceEvent(evt nostr.Event) (nostr.SubspaceOpEventPtr, error) {
 	// Extract common fields
 	subspaceID := ""
+	parents := []string{}
 	var authTag cip.AuthTag
 
 	for _, tag := range evt.Tags {
@@ -92,8 +86,9 @@ func ParseGovernanceEvent(evt nostr.Event) (nostr.SubspaceOpEventPtr, error) {
 				return nil, fmt.Errorf("failed to parse auth tag: %v", err)
 			}
 			authTag = auth
+		case "parent":
+			parents = append(parents, tag[1:]...)
 		}
-
 	}
 
 	// Get operation from kind
@@ -105,26 +100,27 @@ func ParseGovernanceEvent(evt nostr.Event) (nostr.SubspaceOpEventPtr, error) {
 	// Parse based on operation type
 	switch operation {
 	case "post":
-		return parsePostEvent(evt, subspaceID, operation, authTag)
+		return parsePostEvent(evt, subspaceID, operation, authTag, parents)
 	case "propose":
-		return parseProposeEvent(evt, subspaceID, operation, authTag)
+		return parseProposeEvent(evt, subspaceID, operation, authTag, parents)
 	case "vote":
-		return parseVoteEvent(evt, subspaceID, operation, authTag)
+		return parseVoteEvent(evt, subspaceID, operation, authTag, parents)
 	case "invite":
-		return parseInviteEvent(evt, subspaceID, operation, authTag)
+		return parseInviteEvent(evt, subspaceID, operation, authTag, parents)
 	default:
 		return nil, fmt.Errorf("unknown operation type: %s", operation)
 	}
 
 }
 
-func parsePostEvent(evt nostr.Event, subspaceID, operation string, authTag cip.AuthTag) (*PostEvent, error) {
+func parsePostEvent(evt nostr.Event, subspaceID, operation string, authTag cip.AuthTag, parents []string) (*PostEvent, error) {
 	post := &PostEvent{
 		SubspaceOpEvent: &nostr.SubspaceOpEvent{
 			SubspaceID: subspaceID,
 			Operation:  operation,
 			AuthTag:    authTag,
 			Event:      evt,
+			Parents:    parents,
 		},
 	}
 
@@ -135,21 +131,20 @@ func parsePostEvent(evt nostr.Event, subspaceID, operation string, authTag cip.A
 		switch tag[0] {
 		case "content_type":
 			post.ContentType = tag[1]
-		case "parent":
-			post.ParentHash = tag[1]
 		}
 	}
 
 	return post, nil
 }
 
-func parseProposeEvent(evt nostr.Event, subspaceID, operation string, authTag cip.AuthTag) (*ProposeEvent, error) {
+func parseProposeEvent(evt nostr.Event, subspaceID, operation string, authTag cip.AuthTag, parents []string) (*ProposeEvent, error) {
 	propose := &ProposeEvent{
 		SubspaceOpEvent: &nostr.SubspaceOpEvent{
 			SubspaceID: subspaceID,
 			Operation:  operation,
 			AuthTag:    authTag,
 			Event:      evt,
+			Parents:    parents,
 		},
 	}
 
@@ -168,13 +163,14 @@ func parseProposeEvent(evt nostr.Event, subspaceID, operation string, authTag ci
 	return propose, nil
 }
 
-func parseVoteEvent(evt nostr.Event, subspaceID, operation string, authTag cip.AuthTag) (*VoteEvent, error) {
+func parseVoteEvent(evt nostr.Event, subspaceID, operation string, authTag cip.AuthTag, parents []string) (*VoteEvent, error) {
 	vote := &VoteEvent{
 		SubspaceOpEvent: &nostr.SubspaceOpEvent{
 			SubspaceID: subspaceID,
 			Operation:  operation,
 			AuthTag:    authTag,
 			Event:      evt,
+			Parents:    parents,
 		},
 	}
 
@@ -193,13 +189,14 @@ func parseVoteEvent(evt nostr.Event, subspaceID, operation string, authTag cip.A
 	return vote, nil
 }
 
-func parseInviteEvent(evt nostr.Event, subspaceID, operation string, authTag cip.AuthTag) (*InviteEvent, error) {
+func parseInviteEvent(evt nostr.Event, subspaceID, operation string, authTag cip.AuthTag, parents []string) (*InviteEvent, error) {
 	invite := &InviteEvent{
 		SubspaceOpEvent: &nostr.SubspaceOpEvent{
 			SubspaceID: subspaceID,
 			Operation:  operation,
 			AuthTag:    authTag,
 			Event:      evt,
+			Parents:    parents,
 		},
 	}
 
@@ -208,8 +205,8 @@ func parseInviteEvent(evt nostr.Event, subspaceID, operation string, authTag cip
 			continue
 		}
 		switch tag[0] {
-		case "invitee_pubkey":
-			invite.InviteePubkey = tag[1]
+		case "inviter_addr":
+			invite.InviterAddr = tag[1]
 		case "rules":
 			invite.Rules = tag[1]
 		}

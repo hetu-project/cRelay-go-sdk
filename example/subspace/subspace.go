@@ -43,7 +43,7 @@ func main() {
 	}
 	postEvent.PubKey = pub
 	postEvent.SetContentType("markdown")
-	postEvent.SetParent("parent-hash")
+	postEvent.SetParents([]string{"parent-hash"})
 	postEvent.Content = "# Subspace update \n We have completed the model optimization!"
 	postEvent.Sign(sk)
 
@@ -64,7 +64,7 @@ func main() {
 	// Create an invite (basic operation)
 	inviteEvent, err := cip01.NewInviteEvent(createEvent.SubspaceID)
 	inviteEvent.PubKey = pub
-	inviteEvent.SetInvite("<Charlie's ETH Address>", "energy>1000")
+	inviteEvent.SetInviter("<Charlie's ETH Address>", "energy>1000")
 	inviteEvent.Content = "Invite Charlie join into Desci AI subspace"
 	inviteEvent.Sign(sk)
 

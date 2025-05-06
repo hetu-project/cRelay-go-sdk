@@ -268,6 +268,7 @@ type SubspaceOpEvent struct {
 	SubspaceID string
 	Operation  string
 	AuthTag    cip.AuthTag
+	Parents    []string
 }
 
 func (e *SubspaceOpEvent) GetSubspaceID() string   { return e.SubspaceID }
@@ -302,4 +303,12 @@ func NewSubspaceOpEvent(subspaceID string, kind int) (*SubspaceOpEvent, error) {
 func (e *SubspaceOpEvent) SetAuth(action cip.Action, key uint32, exp uint64) {
 	e.AuthTag = cip.NewAuthTag(action, key, exp)
 	e.Tags = append(e.Tags, Tag{"auth", e.AuthTag.String()})
+}
+
+// SetParents sets the parent event hash
+func (e *SubspaceOpEvent) SetParents(parentHashSet []string) {
+	e.Parents = parentHashSet
+	parents := Tag{"parent"}
+	parents = append(parents, parentHashSet...)
+	e.Tags = append(e.Tags, parents)
 }
