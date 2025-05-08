@@ -76,6 +76,18 @@ func main() {
 	modelEvent.Content = "ipfs://bafy..."
 	modelEvent.Sign(sk)
 
+	// Create a mint operation (basic operation)
+	mintEvent, err := cip01.NewMintEvent(createEvent.SubspaceID)
+	if err != nil {
+		fmt.Printf("err: %s", err)
+	}
+	mintEvent.PubKey = pub
+	mintEvent.SetTokenInfo("DesciToken", "DST", "18", "100", "30300:2,30301:2,30302:1,30303:3,30304:10")
+	mintEvent.Content = "Initial token distribution for Desci AI Model collaboration"
+	mintEvent.Sign(sk)
+	fmt.Println("------")
+	fmt.Printf("Mint: %s\n", mintEvent)
+
 	// publish the events to relays
 	ctx := context.Background()
 	for _, url := range relays {
@@ -94,6 +106,7 @@ func main() {
 			voteEvent.Event,
 			inviteEvent.Event,
 			modelEvent.Event,
+			mintEvent.Event,
 		}
 
 		for _, ev := range events {

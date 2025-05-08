@@ -307,8 +307,16 @@ func (e *SubspaceOpEvent) SetAuth(action cip.Action, key uint32, exp uint64) {
 
 // SetParents sets the parent event hash
 func (e *SubspaceOpEvent) SetParents(parentHashSet []string) {
-	e.Parents = parentHashSet
-	parents := Tag{"parent"}
-	parents = append(parents, parentHashSet...)
-	e.Tags = append(e.Tags, parents)
+	var validParents []string
+	for _, parent := range parentHashSet {
+		if len(parent) == 64 { // Assuming a hash string is 64 characters long
+			validParents = append(validParents, parent)
+		}
+	}
+	e.Parents = validParents
+	if len(validParents) > 0 {
+		parents := Tag{"parent"}
+		parents = append(parents, validParents...)
+		e.Tags = append(e.Tags, parents)
+	}
 }

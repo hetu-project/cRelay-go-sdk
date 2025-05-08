@@ -10,13 +10,14 @@ const (
 	KindGovernancePropose = 30301
 	KindGovernanceVote    = 30302
 	KindGovernanceInvite  = 30303
+	KindGovernanceMint    = 30304
 
 	// Modelgraph event kind
-	KindModelgraphModel   = 30304
-	KindModelgraphData    = 30305
-	KindModelgraphCompute = 30306
-	KindModelgraphAlgo    = 30307
-	KindModelgraphValid   = 30308
+	KindModelgraphModel   = 30404
+	KindModelgraphData    = 30405
+	KindModelgraphCompute = 30406
+	KindModelgraphAlgo    = 30407
+	KindModelgraphValid   = 30408
 )
 
 const (
@@ -29,19 +30,20 @@ const (
 	OpPropose = "propose" // 30301
 	OpVote    = "vote"    // 30302
 	OpInvite  = "invite"  // 30303
+	OpMint    = "mint"    // 30304
 
 	// Business operation types
-	OpModel   = "model"   // 30304
-	OpData    = "data"    // 30305
-	OpCompute = "compute" // 30306
-	OpAlgo    = "algo"    // 30307
-	OpValid   = "valid"   // 30308
+	OpModel   = "model"   // 30404
+	OpData    = "data"    // 30405
+	OpCompute = "compute" // 30406
+	OpAlgo    = "algo"    // 30407
+	OpValid   = "valid"   // 30408
 )
 
 const (
 	// Default operations string for subspace creation
-	DefaultSubspaceOps = "post=30300,propose=30301,vote=30302,invite=30303"
-	
+	DefaultSubspaceOps = "post=30300,propose=30301,vote=30302,invite=30303,mint=30304"
+
 	// Modelgraph operations string for subspace creation
-	ModelGraphSubspaceOps = "model=30304,data=30305,compute=30306,algo=30307,valid=30308"
+	ModelGraphSubspaceOps = "model=30404,data=30405,compute=30406,algo=30407,valid=30408"
 )

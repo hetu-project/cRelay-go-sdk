@@ -2,6 +2,8 @@ package cip01
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/nbd-wtf/go-nostr"
 	"github.com/nbd-wtf/go-nostr/cip"
@@ -66,6 +68,50 @@ func (e *InviteEvent) SetInviter(inviterAddress, rules string) {
 	}
 }
 
+// MintEvent represents a mint operation in governance subspace
+type MintEvent struct {
+	*nostr.SubspaceOpEvent
+	TokenName     string
+	TokenSymbol   string
+	TokenDecimals string
+	InitialSupply string
+	DropRatio     string
+}
+
+// SetTokenInfo sets the token information for the mint operation
+func (e *MintEvent) SetTokenInfo(name, symbol, decimals, initialSupply, dropRatio string) {
+	e.TokenName = name
+	e.TokenSymbol = symbol
+	e.TokenDecimals = decimals
+	e.InitialSupply = initialSupply
+	e.DropRatio = dropRatio
+
+	e.Tags = append(e.Tags,
+		nostr.Tag{"token_name", name},
+		nostr.Tag{"token_symbol", symbol},
+		nostr.Tag{"token_decimals", decimals},
+		nostr.Tag{"initial_supply", initialSupply},
+		nostr.Tag{"drop_ratio", dropRatio},
+	)
+}
+
+func (e *MintEvent) ParseRewardRules(rule string) map[int]int {
+	rewardRules := make(map[int]int)
+	segments := strings.Split(e.DropRatio, ",")
+	for _, segment := range segments {
+		parts := strings.Split(segment, ":")
+		if len(parts) != 2 {
+			continue
+		}
+		actionID, err1 := strconv.Atoi(parts[0])
+		points, err2 := strconv.Atoi(parts[1])
+		if err1 == nil && err2 == nil {
+			rewardRules[actionID] = points
+		}
+	}
+	return rewardRules
+}
+
 // ParseGovernanceEvent parses a Nostr event into a governance event
 func ParseGovernanceEvent(evt nostr.Event) (nostr.SubspaceOpEventPtr, error) {
 	// Extract common fields
@@ -107,6 +153,8 @@ func ParseGovernanceEvent(evt nostr.Event) (nostr.SubspaceOpEventPtr, error) {
 		return parseVoteEvent(evt, subspaceID, operation, authTag, parents)
 	case "invite":
 		return parseInviteEvent(evt, subspaceID, operation, authTag, parents)
+	case "mint":
+		return parseMintEvent(evt, subspaceID, operation, authTag, parents)
 	default:
 		return nil, fmt.Errorf("unknown operation type: %s", operation)
 	}
@@ -215,6 +263,38 @@ func parseInviteEvent(evt nostr.Event, subspaceID, operation string, authTag cip
 	return invite, nil
 }
 
+func parseMintEvent(evt nostr.Event, subspaceID, operation string, authTag cip.AuthTag, parents []string) (*MintEvent, error) {
+	mint := &MintEvent{
+		SubspaceOpEvent: &nostr.SubspaceOpEvent{
+			SubspaceID: subspaceID,
+			Operation:  operation,
+			AuthTag:    authTag,
+			Event:      evt,
+			Parents:    parents,
+		},
+	}
+
+	for _, tag := range evt.Tags {
+		if len(tag) < 2 {
+			continue
+		}
+		switch tag[0] {
+		case "token_name":
+			mint.TokenName = tag[1]
+		case "token_symbol":
+			mint.TokenSymbol = tag[1]
+		case "token_decimals":
+			mint.TokenDecimals = tag[1]
+		case "initial_supply":
+			mint.InitialSupply = tag[1]
+		case "drop_ratio":
+			mint.DropRatio = tag[1]
+		}
+	}
+
+	return mint, nil
+}
+
 // NewPostEvent creates a new post event
 func NewPostEvent(subspaceID string) (*PostEvent, error) {
 	baseEvent, err := nostr.NewSubspaceOpEvent(subspaceID, cip.KindGovernancePost)
@@ -255,6 +335,17 @@ func NewInviteEvent(subspaceID string) (*InviteEvent, error) {
 		return nil, err
 	}
 	return &InviteEvent{
+		SubspaceOpEvent: baseEvent,
+	}, nil
+}
+
+// NewMintEvent creates a new mint event
+func NewMintEvent(subspaceID string) (*MintEvent, error) {
+	baseEvent, err := nostr.NewSubspaceOpEvent(subspaceID, cip.KindGovernanceMint)
+	if err != nil {
+		return nil, err
+	}
+	return &MintEvent{
 		SubspaceOpEvent: baseEvent,
 	}, nil
 }

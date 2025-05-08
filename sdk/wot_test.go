@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"context"
 	"sync"
 	"testing"
 	"time"
@@ -11,7 +12,7 @@ import (
 
 func TestLoadWoT(t *testing.T) {
 	sys := NewSystem()
-	ctx := t.Context()
+	ctx := context.TODO()
 
 	// test with fiatjaf's pubkey
 	wotch, err := sys.loadWoT(ctx, "3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d")
@@ -46,7 +47,7 @@ func TestLoadWoT(t *testing.T) {
 
 func TestLoadWoTManyPeople(t *testing.T) {
 	sys := NewSystem()
-	ctx := t.Context()
+	ctx := context.TODO()
 
 	wg := sync.WaitGroup{}
 	wg.Add(3 + 2 + 2)

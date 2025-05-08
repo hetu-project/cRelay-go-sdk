@@ -11,6 +11,7 @@ var KeyOpMap = map[int]string{
 	KindGovernancePropose: OpPropose,
 	KindGovernanceVote:    OpVote,
 	KindGovernanceInvite:  OpInvite,
+	KindGovernanceMint:    OpMint,
 
 	// ModelGraph operations
 	KindModelgraphModel:   OpModel,
