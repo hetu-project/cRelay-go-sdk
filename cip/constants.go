@@ -12,12 +12,22 @@ const (
 	KindGovernanceInvite  = 30303
 	KindGovernanceMint    = 30304
 
+	// CommonGraph event kinds
+	KindCommonGraphProject     = 30101
+	KindCommonGraphTask        = 30102
+	KindCommonGraphEntity      = 30103
+	KindCommonGraphRelation    = 30104
+	KindCommonGraphObservation = 30105
+
 	// Modelgraph event kind
-	KindModelgraphModel   = 30404
-	KindModelgraphData    = 30405
-	KindModelgraphCompute = 30406
-	KindModelgraphAlgo    = 30407
-	KindModelgraphValid   = 30408
+	KindModelgraphModel        = 30404
+	KindModelgraphDataset      = 30405
+	KindModelgraphCompute      = 30406
+	KindModelgraphAlgo         = 30407
+	KindModelgraphValid        = 30408
+	KindModelgraphFinetune     = 30409
+	KindModelgraphConversation = 30410
+	KindModelgraphSession      = 30411
 )
 
 const (
@@ -32,18 +42,34 @@ const (
 	OpInvite  = "invite"  // 30303
 	OpMint    = "mint"    // 30304
 
+	// CommonGraph operation types
+	OpProject     = "project"     // 30101
+	OpTask        = "task"        // 30102
+	OpEntity      = "entity"      // 30103
+	OpRelation    = "relation"    // 30104
+	OpObservation = "observation" // 30105
+
 	// Business operation types
-	OpModel   = "model"   // 30404
-	OpData    = "data"    // 30405
-	OpCompute = "compute" // 30406
-	OpAlgo    = "algo"    // 30407
-	OpValid   = "valid"   // 30408
+	OpModel        = "model"        // 30404
+	OpDataset      = "dataset"         // 30405
+	OpCompute      = "compute"      // 30406
+	OpAlgo         = "algo"         // 30407
+	OpValid        = "valid"        // 30408
+	OpFinetune     = "finetune"     // 30409
+	OpConversation = "conversation" // 30410
+	OpSession      = "session"      // 30411
 )
 
 const (
+	// Default common project actions
+	CommonPrjOps = "project=30101,task=30102"
+
+	// Default common graph actions
+	CommonGraphOps = "entity=30103,relation=30104,observation=30105"
+
 	// Default operations string for subspace creation
 	DefaultSubspaceOps = "post=30300,propose=30301,vote=30302,invite=30303,mint=30304"
 
-	// Modelgraph operations string for subspace creation
-	ModelGraphSubspaceOps = "model=30404,data=30405,compute=30406,algo=30407,valid=30408"
+	// Modelgraph operations string for model
+	ModelGraphSubspaceOps = "dataset=30405,finetune=30409,conversation=30410,session=30411"
 )

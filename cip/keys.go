@@ -13,12 +13,22 @@ var KeyOpMap = map[int]string{
 	KindGovernanceInvite:  OpInvite,
 	KindGovernanceMint:    OpMint,
 
+	// CommonGraph operations
+	KindCommonGraphProject:     OpProject,
+	KindCommonGraphTask:        OpTask,
+	KindCommonGraphEntity:      OpEntity,
+	KindCommonGraphRelation:    OpRelation,
+	KindCommonGraphObservation: OpObservation,
+
 	// ModelGraph operations
-	KindModelgraphModel:   OpModel,
-	KindModelgraphData:    OpData,
-	KindModelgraphCompute: OpCompute,
-	KindModelgraphAlgo:    OpAlgo,
-	KindModelgraphValid:   OpValid,
+	KindModelgraphModel:        OpModel,
+	KindModelgraphDataset:      OpDataset,
+	KindModelgraphCompute:      OpCompute,
+	KindModelgraphAlgo:         OpAlgo,
+	KindModelgraphValid:        OpValid,
+	KindModelgraphFinetune:     OpFinetune,
+	KindModelgraphConversation: OpConversation,
+	KindModelgraphSession:      OpSession,
 }
 
 // GetOpFromKind returns the operation name for a given kind value

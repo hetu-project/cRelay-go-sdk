@@ -7,7 +7,7 @@ import (
 	"github.com/nbd-wtf/go-nostr"
 	"github.com/nbd-wtf/go-nostr/cip"
 	"github.com/nbd-wtf/go-nostr/cip/cip01"
-	"github.com/nbd-wtf/go-nostr/cip/cip02"
+	"github.com/nbd-wtf/go-nostr/cip/cip03"
 )
 
 // AllOps returns the combined operations string including both basic and business operations
@@ -69,7 +69,7 @@ func main() {
 	inviteEvent.Sign(sk)
 
 	// Create a model operation (business operation)
-	modelEvent, err := cip02.NewModelEvent(createEvent.SubspaceID)
+	modelEvent, err := cip03.NewModelEvent(createEvent.SubspaceID)
 	modelEvent.PubKey = pub
 	modelEvent.SetParent("parent-hash")
 	modelEvent.SetContributions("base:0.1,data:0.6,algo:0.4")

@@ -145,15 +145,15 @@ func ParseGovernanceEvent(evt nostr.Event) (nostr.SubspaceOpEventPtr, error) {
 
 	// Parse based on operation type
 	switch operation {
-	case "post":
+	case cip.OpPost:
 		return parsePostEvent(evt, subspaceID, operation, authTag, parents)
-	case "propose":
+	case cip.OpPropose:
 		return parseProposeEvent(evt, subspaceID, operation, authTag, parents)
-	case "vote":
+	case cip.OpVote:
 		return parseVoteEvent(evt, subspaceID, operation, authTag, parents)
-	case "invite":
+	case cip.OpInvite:
 		return parseInviteEvent(evt, subspaceID, operation, authTag, parents)
-	case "mint":
+	case cip.OpMint:
 		return parseMintEvent(evt, subspaceID, operation, authTag, parents)
 	default:
 		return nil, fmt.Errorf("unknown operation type: %s", operation)
