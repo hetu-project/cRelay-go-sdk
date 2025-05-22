@@ -17,7 +17,7 @@ func main() {
 	// Create a subspace with all operations (basic + business)
 	createEvent := nostr.NewSubspaceCreateEvent(
 		"common_graph",
-		cip.CommonPrjOps + "," + cip.CommonGraphOps, // Use default operations string
+		cip.CommonPrjOps+","+cip.CommonGraphOps, // Use default operations string
 		"energy>10000",
 		"Common Graph Example Subspace",
 		"https://example.com/images/subspace.png",
@@ -59,6 +59,7 @@ func main() {
 		"0xBob",
 		"in_progress",
 		"1712345678",
+		"high",
 	)
 	taskEvent.Content = "Review recent papers on quantum NLP."
 	taskEvent.Sign(sk)
@@ -79,7 +80,14 @@ func main() {
 		fmt.Printf("err: %s", err)
 	}
 	relationEvent.PubKey = pub
-	relationEvent.SetRelationInfo("John_Smith", "Anthropic", "works_at", "")
+	relationEvent.SetRelationInfo(
+		"John_Smith",
+		"Anthropic",
+		"works_at",
+		"",
+		0.85,
+		"",
+	)
 	relationEvent.Content = ""
 	relationEvent.Sign(sk)
 
