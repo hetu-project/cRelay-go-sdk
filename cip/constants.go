@@ -28,6 +28,13 @@ const (
 	KindModelgraphFinetune     = 30409
 	KindModelgraphConversation = 30410
 	KindModelgraphSession      = 30411
+
+	// OpenResearch event kinds
+	KindOpenResearchPaper      = 30501
+	KindOpenResearchAnnotation = 30502
+	KindOpenResearchReview     = 30503
+	KindOpenResearchAIAnalysis = 30504
+	KindOpenResearchDiscussion = 30505
 )
 
 const (
@@ -51,13 +58,20 @@ const (
 
 	// Business operation types
 	OpModel        = "model"        // 30404
-	OpDataset      = "dataset"         // 30405
+	OpDataset      = "dataset"      // 30405
 	OpCompute      = "compute"      // 30406
 	OpAlgo         = "algo"         // 30407
 	OpValid        = "valid"        // 30408
 	OpFinetune     = "finetune"     // 30409
 	OpConversation = "conversation" // 30410
 	OpSession      = "session"      // 30411
+
+	// OpenResearch operation types
+	OpPaper      = "paper"       // 30501
+	OpAnnotation = "annotation"  // 30502
+	OpReview     = "review"      // 30503
+	OpAIAnalysis = "ai_analysis" // 30504
+	OpDiscussion = "discussion"  // 30505
 )
 
 const (
@@ -72,4 +86,7 @@ const (
 
 	// Modelgraph operations string for model
 	ModelGraphSubspaceOps = "dataset=30405,finetune=30409,conversation=30410,session=30411"
+
+	// OpenResearch operations string
+	OpenResearchSubspaceOps = "paper=30501,annotation=30502,review=30503,ai_analysis=30504,discussion=30505"
 )

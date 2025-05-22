@@ -29,6 +29,13 @@ var KeyOpMap = map[int]string{
 	KindModelgraphFinetune:     OpFinetune,
 	KindModelgraphConversation: OpConversation,
 	KindModelgraphSession:      OpSession,
+
+	// OpenResearch operations
+	KindOpenResearchPaper:      OpPaper,
+	KindOpenResearchAnnotation: OpAnnotation,
+	KindOpenResearchReview:     OpReview,
+	KindOpenResearchAIAnalysis: OpAIAnalysis,
+	KindOpenResearchDiscussion: OpDiscussion,
 }
 
 // GetOpFromKind returns the operation name for a given kind value

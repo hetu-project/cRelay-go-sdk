@@ -48,16 +48,18 @@ type TaskEvent struct {
 	Assignee  string
 	Status    string
 	Deadline  string
+	Priority  string
 }
 
 // SetTaskInfo sets the task information
-func (e *TaskEvent) SetTaskInfo(projectID, taskID, title, assignee, status, deadline string) {
+func (e *TaskEvent) SetTaskInfo(projectID, taskID, title, assignee, status, deadline, priority string) {
 	e.ProjectID = projectID
 	e.TaskID = taskID
 	e.Title = title
 	e.Assignee = assignee
 	e.Status = status
 	e.Deadline = deadline
+	e.Priority = priority
 
 	e.Tags = append(e.Tags,
 		nostr.Tag{"project_id", projectID},
@@ -66,6 +68,7 @@ func (e *TaskEvent) SetTaskInfo(projectID, taskID, title, assignee, status, dead
 		nostr.Tag{"assignee", assignee},
 		nostr.Tag{"status", status},
 		nostr.Tag{"deadline", deadline},
+		nostr.Tag{"priority", priority},
 	)
 }
 
@@ -94,23 +97,32 @@ type RelationEvent struct {
 	To           string
 	RelationType string
 	Context      string
+	Weight       float64
+	Description  string
 }
 
 // SetRelationInfo sets the relation information
-func (e *RelationEvent) SetRelationInfo(from, to, relationType, context string) {
+func (e *RelationEvent) SetRelationInfo(from, to, relationType, context string, weight float64, description string) {
 	e.From = from
 	e.To = to
 	e.RelationType = relationType
 	e.Context = context
+	e.Weight = weight
+	e.Description = description
 
 	e.Tags = append(e.Tags,
 		nostr.Tag{"from", from},
 		nostr.Tag{"to", to},
 		nostr.Tag{"relation_type", relationType},
+		nostr.Tag{"weight", fmt.Sprintf("%.2f", weight)},
 	)
 
 	if context != "" {
 		e.Tags = append(e.Tags, nostr.Tag{"context", context})
+	}
+
+	if description != "" {
+		e.Tags = append(e.Tags, nostr.Tag{"description", description})
 	}
 }
 
@@ -240,6 +252,8 @@ func parseTaskEvent(evt nostr.Event, subspaceID, operation string, authTag cip.A
 			task.Status = tag[1]
 		case "deadline":
 			task.Deadline = tag[1]
+		case "priority":
+			task.Priority = tag[1]
 		}
 	}
 
@@ -296,6 +310,13 @@ func parseRelationEvent(evt nostr.Event, subspaceID, operation string, authTag c
 			relation.RelationType = tag[1]
 		case "context":
 			relation.Context = tag[1]
+		case "weight":
+			_, err := fmt.Sscanf(tag[1], "%f", &relation.Weight)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse weight: %v", err)
+			}
+		case "description":
+			relation.Description = tag[1]
 		}
 	}
 
