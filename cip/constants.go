@@ -1,5 +1,6 @@
 package cip
 
+// Event kinds
 const (
 	// Subspace common event kinds
 	KindSubspaceCreate = 30100
@@ -37,6 +38,7 @@ const (
 	KindOpenResearchDiscussion = 30505
 )
 
+// Event operations
 const (
 	// General base operation types
 	OpSubspaceCreate = "subspace_create" // 30100
@@ -74,6 +76,7 @@ const (
 	OpDiscussion = "discussion"  // 30505
 )
 
+// Default cip operations
 const (
 	// Default common project actions
 	CommonPrjOps = "project=30101,task=30102"
