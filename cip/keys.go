@@ -36,6 +36,26 @@ var KeyOpMap = map[int]string{
 	KindOpenResearchReview:     OpReview,
 	KindOpenResearchAIAnalysis: OpAIAnalysis,
 	KindOpenResearchDiscussion: OpDiscussion,
+	KindOpenResearchReadPaper:  OpReadPaper,
+	KindOpenResearchCoCreate:   OpCoCreate,
+
+	// Social operations
+	KindSocialLike:     OpLike,
+	KindSocialCollect:  OpCollect,
+	KindSocialShare:    OpShare,
+	KindSocialComment:  OpComment,
+	KindSocialTag:      OpTag,
+	KindSocialFollow:   OpFollow,
+	KindSocialUnfollow: OpUnfollow,
+	KindSocialQuestion: OpQuestion,
+	KindSocialRoom:     OpRoom,
+	KindSocialMessage:  OpMessage,
+
+	// Community operations
+	KindCommunityCreate:         OpCommunityCreate,
+	KindCommunityInvite:         OpCommunityInvite,
+	KindCommunityChannelCreate:  OpChannelCreate,
+	KindCommunityChannelMessage: OpChannelMessage,
 }
 
 // GetOpFromKind returns the operation name for a given kind value

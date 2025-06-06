@@ -36,6 +36,26 @@ const (
 	KindOpenResearchReview     = 30503
 	KindOpenResearchAIAnalysis = 30504
 	KindOpenResearchDiscussion = 30505
+	KindOpenResearchReadPaper  = 30506
+	KindOpenResearchCoCreate   = 30507
+
+	// Social event kinds
+	KindSocialLike     = 30600
+	KindSocialCollect  = 30601
+	KindSocialShare    = 30602
+	KindSocialComment  = 30603
+	KindSocialTag      = 30604
+	KindSocialFollow   = 30605
+	KindSocialUnfollow = 30606
+	KindSocialQuestion = 30607
+	KindSocialRoom     = 30608
+	KindSocialMessage  = 30609
+
+	// Community event kinds
+	KindCommunityCreate         = 30700
+	KindCommunityInvite         = 30701
+	KindCommunityChannelCreate  = 30702
+	KindCommunityChannelMessage = 30703
 )
 
 // Event operations
@@ -69,11 +89,31 @@ const (
 	OpSession      = "session"      // 30411
 
 	// OpenResearch operation types
-	OpPaper      = "paper"       // 30501
-	OpAnnotation = "annotation"  // 30502
-	OpReview     = "review"      // 30503
-	OpAIAnalysis = "ai_analysis" // 30504
-	OpDiscussion = "discussion"  // 30505
+	OpPaper      = "paper"           // 30501
+	OpAnnotation = "annotation"      // 30502
+	OpReview     = "review"          // 30503
+	OpAIAnalysis = "ai_analysis"     // 30504
+	OpDiscussion = "discussion"      // 30505
+	OpReadPaper  = "read_paper"      // 30506
+	OpCoCreate   = "co_create_paper" // 30507
+
+	// Social operation types
+	OpLike     = "like"     // 30600
+	OpCollect  = "collect"  // 30601
+	OpShare    = "share"    // 30602
+	OpComment  = "comment"  // 30603
+	OpTag      = "tag"      // 30604
+	OpFollow   = "follow"   // 30605
+	OpUnfollow = "unfollow" // 30606
+	OpQuestion = "question" // 30607
+	OpRoom     = "room"     // 30608
+	OpMessage  = "message"  // 30609
+
+	// Community operation types
+	OpCommunityCreate = "community_create" // 30700
+	OpCommunityInvite = "community_invite" // 30701
+	OpChannelCreate   = "channel_create"   // 30702
+	OpChannelMessage  = "channel_message"  // 30703
 )
 
 // Default cip operations
@@ -91,5 +131,11 @@ const (
 	ModelGraphSubspaceOps = "dataset=30405,finetune=30409,conversation=30410,session=30411"
 
 	// OpenResearch operations string
-	OpenResearchSubspaceOps = "paper=30501,annotation=30502,review=30503,ai_analysis=30504,discussion=30505"
+	OpenResearchSubspaceOps = "paper=30501,annotation=30502,review=30503,ai_analysis=30504,discussion=30505,read_paper=30506,co_create_paper=30507"
+
+	// Social operations string
+	SocialSubspaceOps = "like=30600,collect=30601,share=30602,comment=30603,tag=30604,follow=30605,unfollow=30606,question=30607,room=30608,message=30609"
+
+	// Community operations string
+	CommunitySubspaceOps = "community_create=30700,community_invite=30701,channel_create=30702,channel_message=30703"
 )

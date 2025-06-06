@@ -17,7 +17,6 @@ type PaperEvent struct {
 	Keywords  []string
 	Year      string
 	Journal   string
-	Content   string
 }
 
 // SetPaperInfo sets the paper information
@@ -56,7 +55,6 @@ type AnnotationEvent struct {
 	Position string
 	Type     string
 	ParentID string
-	Content  string
 }
 
 // SetAnnotationInfo sets the annotation information
@@ -166,6 +164,57 @@ func (e *DiscussionEvent) SetDiscussionInfo(topic, parentID string, references [
 	}
 }
 
+// ReadPaperEvent represents a paper reading operation in openresearch subspace
+type ReadPaperEvent struct {
+	*nostr.SubspaceOpEvent
+	PaperID  string
+	UserID   string
+	Duration string
+	Depth    string
+}
+
+// SetReadPaperInfo sets the read paper information
+func (e *ReadPaperEvent) SetReadPaperInfo(paperID, userID, duration, depth string) {
+	e.PaperID = paperID
+	e.UserID = userID
+	e.Duration = duration
+	e.Depth = depth
+
+	e.Tags = append(e.Tags,
+		nostr.Tag{"paper_id", paperID},
+		nostr.Tag{"user_id", userID},
+		nostr.Tag{"duration", duration},
+		nostr.Tag{"depth", depth},
+	)
+}
+
+// CoCreatePaperEvent represents a collaborative paper creation operation in openresearch subspace
+type CoCreatePaperEvent struct {
+	*nostr.SubspaceOpEvent
+	PaperID string
+	UserIDs []string
+	Quality string
+	Content string
+}
+
+// SetCoCreatePaperInfo sets the collaborative paper creation information
+func (e *CoCreatePaperEvent) SetCoCreatePaperInfo(paperID string, userIDs []string, quality string) {
+	e.PaperID = paperID
+	e.UserIDs = userIDs
+	e.Quality = quality
+
+	e.Tags = append(e.Tags,
+		nostr.Tag{"paper_id", paperID},
+		nostr.Tag{"quality", quality},
+	)
+
+	if len(userIDs) > 0 {
+		userIDsTag := nostr.Tag{"user_ids"}
+		userIDsTag = append(userIDsTag, userIDs...)
+		e.Tags = append(e.Tags, userIDsTag)
+	}
+}
+
 // ParseOpenResearchEvent parses a Nostr event into an openresearch event
 func ParseOpenResearchEvent(evt nostr.Event) (nostr.SubspaceOpEventPtr, error) {
 	// Extract common fields
@@ -209,6 +258,10 @@ func ParseOpenResearchEvent(evt nostr.Event) (nostr.SubspaceOpEventPtr, error) {
 		return parseAIAnalysisEvent(evt, subspaceID, operation, authTag, parents)
 	case cip.OpDiscussion:
 		return parseDiscussionEvent(evt, subspaceID, operation, authTag, parents)
+	case cip.OpReadPaper:
+		return parseReadPaperEvent(evt, subspaceID, operation, authTag, parents)
+	case cip.OpCoCreate:
+		return parseCoCreatePaperEvent(evt, subspaceID, operation, authTag, parents)
 	default:
 		return nil, fmt.Errorf("unknown operation type: %s", operation)
 	}
@@ -223,8 +276,8 @@ func parsePaperEvent(evt nostr.Event, subspaceID, operation string, authTag cip.
 			Event:      evt,
 			Parents:    parents,
 		},
-		Content: evt.Content,
 	}
+	paper.Event.Content = evt.Content
 
 	for _, tag := range evt.Tags {
 		if len(tag) < 2 {
@@ -258,8 +311,8 @@ func parseAnnotationEvent(evt nostr.Event, subspaceID, operation string, authTag
 			Event:      evt,
 			Parents:    parents,
 		},
-		Content: evt.Content,
 	}
+	annotation.Event.Content = evt.Content
 
 	for _, tag := range evt.Tags {
 		if len(tag) < 2 {
@@ -376,6 +429,66 @@ func parseDiscussionEvent(evt nostr.Event, subspaceID, operation string, authTag
 	return discussion, nil
 }
 
+func parseReadPaperEvent(evt nostr.Event, subspaceID, operation string, authTag cip.AuthTag, parents []string) (*ReadPaperEvent, error) {
+	readPaper := &ReadPaperEvent{
+		SubspaceOpEvent: &nostr.SubspaceOpEvent{
+			SubspaceID: subspaceID,
+			Operation:  operation,
+			AuthTag:    authTag,
+			Event:      evt,
+			Parents:    parents,
+		},
+	}
+	readPaper.Event.Content = evt.Content
+	
+	for _, tag := range evt.Tags {
+		if len(tag) < 2 {
+			continue
+		}
+		switch tag[0] {
+		case "paper_id":
+			readPaper.PaperID = tag[1]
+		case "user_id":
+			readPaper.UserID = tag[1]
+		case "duration":
+			readPaper.Duration = tag[1]
+		case "depth":
+			readPaper.Depth = tag[1]
+		}
+	}
+
+	return readPaper, nil
+}
+
+func parseCoCreatePaperEvent(evt nostr.Event, subspaceID, operation string, authTag cip.AuthTag, parents []string) (*CoCreatePaperEvent, error) {
+	coCreate := &CoCreatePaperEvent{
+		SubspaceOpEvent: &nostr.SubspaceOpEvent{
+			SubspaceID: subspaceID,
+			Operation:  operation,
+			AuthTag:    authTag,
+			Event:      evt,
+			Parents:    parents,
+		},
+		Content: evt.Content,
+	}
+
+	for _, tag := range evt.Tags {
+		if len(tag) < 2 {
+			continue
+		}
+		switch tag[0] {
+		case "paper_id":
+			coCreate.PaperID = tag[1]
+		case "user_ids":
+			coCreate.UserIDs = tag[1:]
+		case "quality":
+			coCreate.Quality = tag[1]
+		}
+	}
+
+	return coCreate, nil
+}
+
 // NewPaperEvent creates a new paper event
 func NewPaperEvent(subspaceID string) (*PaperEvent, error) {
 	baseEvent, err := nostr.NewSubspaceOpEvent(subspaceID, cip.KindOpenResearchPaper)
@@ -428,6 +541,28 @@ func NewDiscussionEvent(subspaceID string) (*DiscussionEvent, error) {
 		return nil, err
 	}
 	return &DiscussionEvent{
+		SubspaceOpEvent: baseEvent,
+	}, nil
+}
+
+// NewReadPaperEvent creates a new read paper event
+func NewReadPaperEvent(subspaceID string) (*ReadPaperEvent, error) {
+	baseEvent, err := nostr.NewSubspaceOpEvent(subspaceID, cip.KindOpenResearchReadPaper)
+	if err != nil {
+		return nil, err
+	}
+	return &ReadPaperEvent{
+		SubspaceOpEvent: baseEvent,
+	}, nil
+}
+
+// NewCoCreatePaperEvent creates a new collaborative paper creation event
+func NewCoCreatePaperEvent(subspaceID string) (*CoCreatePaperEvent, error) {
+	baseEvent, err := nostr.NewSubspaceOpEvent(subspaceID, cip.KindOpenResearchCoCreate)
+	if err != nil {
+		return nil, err
+	}
+	return &CoCreatePaperEvent{
 		SubspaceOpEvent: baseEvent,
 	}, nil
 }
